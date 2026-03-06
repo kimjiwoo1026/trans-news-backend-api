@@ -1,30 +1,47 @@
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-import openai
-import google.generativeai as genai
 import os
+from openai import OpenAI
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 
 class SummarizerService:
 
     def __init__(self):
 
-        model_dir = "lcw99/t5-base-korean-text-summary"
+        self.model_type = os.getenv("SUMMARY_MODEL", "t5")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_dir)
+        if self.model_type == "openai":
 
-        openai.api_key = os.getenv("OPENAI_API_KEY")
-        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+            self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-        self.gemini_model = genai.GenerativeModel("gemini-pro")
+        else:
 
-    def summarize(self, text: str, model: str = "t5"):
+            model_dir = "lcw99/t5-base-korean-text-summary"
 
-        if model == "t5":
+            self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(model_dir)
+
+            self.max_input_length = 2048
+
+
+    def summarize(self, text, max_length=128):
+
+        if self.model_type == "openai":
+
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "다음 뉴스 기사를 간결하게 요약하라."},
+                    {"role": "user", "content": text}
+                ]
+            )
+
+            return response.choices[0].message.content.strip()
+
+        else:
 
             inputs = self.tokenizer(
                 [text],
-                max_length=2048,
+                max_length=self.max_input_length,
                 truncation=True,
                 return_tensors="pt",
                 padding=True
@@ -35,7 +52,7 @@ class SummarizerService:
                 num_beams=16,
                 do_sample=False,
                 min_length=1,
-                max_length=128
+                max_length=max_length
             )
 
             decoded = self.tokenizer.batch_decode(
@@ -44,23 +61,3 @@ class SummarizerService:
             )[0]
 
             return decoded.strip()
-
-        elif model == "openai":
-
-            response = openai.ChatCompletion.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "다음 뉴스를 3줄로 요약해라"},
-                    {"role": "user", "content": text}
-                ]
-            )
-
-            return response.choices[0].message.content
-
-        elif model == "gemini":
-
-            response = self.gemini_model.generate_content(
-                f"다음 뉴스를 3줄로 요약해라:\n{text}"
-            )
-
-            return response.text

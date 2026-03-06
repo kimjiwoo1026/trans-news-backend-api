@@ -1,11 +1,17 @@
 from fastapi import APIRouter
-from services.summarizer_service import summarize_text
+from services.summarizer_service import SummarizerService
 
 router = APIRouter()
 
+summarizer = SummarizerService()
+
+
 @router.post("/summary")
-def summary(text: str):
+def summary(text: str, model: str = "t5"):
 
-    result = summarize_text(text)
+    result = summarizer.summarize(text, model)
 
-    return {"summary": result}
+    return {
+        "model": model,
+        "summary": result
+    }

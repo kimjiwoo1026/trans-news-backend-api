@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+transformer
+torch
+nltk
+libretranslatepy
+feedparser
+openai
+google-generativeai

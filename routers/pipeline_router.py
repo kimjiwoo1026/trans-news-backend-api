@@ -1,23 +1,25 @@
 from fastapi import APIRouter
 from services.crawler_service import Crawler
-from services.summarizer_service import summarize_text
+from services.summarizer_service import SummarizerService
 
 router = APIRouter()
 
 crawler = Crawler()
+summarizer = SummarizerService()
+
 
 @router.get("/news-summary")
-def news_summary(url: str):
+def news_summary(url: str, model: str = "t5"):
 
     content = crawler.crawl_article(url)
 
     if not content:
         return {"error": "기사 본문 추출 실패"}
 
-    summary = summarize_text(content)
+    summary = summarizer.summarize(content, model)
 
     return {
         "url": url,
-        "content": content[:500],
+        "model": model,
         "summary": summary
     }

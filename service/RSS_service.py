@@ -7,14 +7,13 @@ def get_news(keyword: str):
 
     feed = feedparser.parse(url)
 
-    articles = []
+    news_list = []
 
-    for entry in feed.entries:
-
-        articles.append({
+    for entry in feed.entries[:10]:
+        news_list.append({
             "title": entry.title,
             "link": entry.link,
             "published": entry.published
         })
 
-    return articles
+    return news_list

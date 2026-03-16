@@ -26,8 +26,9 @@ transnews-backend/
 │   └── config.py
 ├── services/
 │   ├── crawler_service.py
-│   ├── summarizer_service.py
-│   └── rss_service.py
+│   ├── rss_service.py
+│   ├── search_service.py
+│   └── summarizer_service.py
 ├── routers/
 │   ├── news_router.py
 │   ├── summary_router.py

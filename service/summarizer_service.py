@@ -1,63 +1,24 @@
-import os
-from openai import OpenAI
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import httpx
+import logging
+from app.config import settings # 설정값 불러오기
 
+logger = logging.getLogger(__name__)
 
 class SummarizerService:
+    async def summarize(self, text: str):
+        if not settings.DIFY_API_KEY:
+            logger.error("DIFY_API_KEY is missing!")
+            return "API 설정 오류"
 
-    def __init__(self):
-
-        self.model_type = os.getenv("SUMMARY_MODEL", "t5")
-
-        if self.model_type == "openai":
-
-            self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-        else:
-
-            model_dir = "lcw99/t5-base-korean-text-summary"
-
-            self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-            self.model = AutoModelForSeq2SeqLM.from_pretrained(model_dir)
-
-            self.max_input_length = 2048
-
-
-    def summarize(self, text, max_length=128):
-
-        if self.model_type == "openai":
-
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "다음 뉴스 기사를 간결하게 요약하라."},
-                    {"role": "user", "content": text}
-                ]
-            )
-
-            return response.choices[0].message.content.strip()
-
-        else:
-
-            inputs = self.tokenizer(
-                [text],
-                max_length=self.max_input_length,
-                truncation=True,
-                return_tensors="pt",
-                padding=True
-            )
-
-            output = self.model.generate(
-                **inputs,
-                num_beams=16,
-                do_sample=False,
-                min_length=1,
-                max_length=max_length
-            )
-
-            decoded = self.tokenizer.batch_decode(
-                output,
-                skip_special_tokens=True
-            )[0]
-
-            return decoded.strip()
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            try:
+                response = await client.post(
+                    f"{settings.DIFY_API_URL}/completion",
+                    headers={"Authorization": f"Bearer {settings.DIFY_API_KEY}"},
+                    json={"inputs": {"news": text[:4000]}, "user": "jiwoo"}
+                )
+                response.raise_for_status()
+                return response.json().get("answer", "요약 결과 없음")
+            except Exception as e:
+                logger.error(f"AI Server Error: {str(e)}")
+                return "AI 요약 서비스 일시 중단"

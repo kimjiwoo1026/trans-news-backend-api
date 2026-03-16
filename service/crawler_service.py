@@ -1,49 +1,34 @@
-import requests
-import time
+import httpx
+import logging
+import asyncio
 from bs4 import BeautifulSoup
 
+logger = logging.getLogger(__name__)
 
 class Crawler:
-
     def __init__(self):
+        self.headers = {"User-Agent": "Mozilla/5.0"}
 
-        # HTTP 연결 재사용
-        self.session = requests.Session()
-
-        # 크롤링 차단 방지
-        self.headers = {
-            "User-Agent": "Mozilla/5.0"
-        }
-
-
-    def crawl_article(self, url: str):
-
-        retry = 3   # 최대 3번 재시도
-
-        for attempt in range(retry):
-
-            try:
-
-                res = self.session.get(
-                    url,
-                    headers=self.headers,
-                    timeout=5
-                )
-
-                res.raise_for_status()
-
-                soup = BeautifulSoup(res.text, "html.parser")
-
-                paragraphs = soup.select("p")
-
-                text = " ".join([p.get_text() for p in paragraphs])
-
-                return text.strip()
-
-            except Exception as e:
-
-                print(f"Retry {attempt+1}/{retry} failed: {e}")
-
-                time.sleep(1)   # 재시도 전 대기
-
-        return None
+    async def crawl_article(self, url: str, retries: int = 3):
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            for attempt in range(retries):
+                try:
+                    logger.info(f"[{attempt+1}/{retries}] Crawling: {url}")
+                    res = await client.get(url, headers=self.headers)
+                    res.raise_for_status()
+                    
+                    soup = BeautifulSoup(res.text, "html.parser")
+                    # 본문 영역 정밀 타겟팅
+                    article = soup.find('article') or soup.find('div', id='articleBodyContents')
+                    content = " ".join([p.get_text() for p in article.find_all('p')]) if article else ""
+                    
+                    if len(content) > 100:
+                        return content.strip()
+                    
+                except Exception as e:
+                    logger.warning(f"Attempt {attempt+1} failed: {str(e)}")
+                    if attempt < retries - 1:
+                        await asyncio.sleep(1) # 재시도 전 대기
+            
+            logger.error(f"Final crawl failure for {url}")
+            return None

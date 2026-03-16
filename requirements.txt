@@ -1,11 +1,6 @@
 fastapi
 uvicorn
-requests
+httpx
 beautifulsoup4
-transformer
-torch
-nltk
-libretranslatepy
 feedparser
-openai
-google-generativeai
+python-dotenv

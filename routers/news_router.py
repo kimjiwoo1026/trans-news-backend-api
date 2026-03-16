@@ -1,23 +1,12 @@
 from fastapi import APIRouter
 from services.rss_service import get_news
-from services.crawler_service import Crawler
 
-router = APIRouter()
+router = APIRouter(prefix="/news", tags=["News"])
 
-crawler = Crawler()
-
-
-@router.get("/news")
-def news(keyword: str):
-    return get_news(keyword)
-
-
-@router.get("/article")
-def article(url: str):
-
-    content = crawler.crawl_article(url)
-
-    if not content:
-        return {"error": "기사 본문 추출 실패"}
-
-    return {"content": content}
+@router.get("")
+async def list_news(keyword: str):
+    try:
+        data = await get_news(keyword)
+        return {"status": "SUCCESS", "message": "뉴스 검색 성공", "data": data}
+    except Exception as e:
+        return {"status": "FAILURE", "message": str(e), "data": None}

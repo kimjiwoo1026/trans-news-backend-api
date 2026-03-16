@@ -33,7 +33,6 @@ transnews-backend/
 │   ├── summary_router.py
 │   └── pipeline_router.py
 ├── .gitignore
-├── .env.example (실제 키 대신 가짜 키를 넣은 예시 파일)
 ├── requirements.txt
 └── README.md
 ```

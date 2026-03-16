@@ -20,31 +20,22 @@ PR/ 마케팅 팀을 위한 기사 분석 데이터 제공 <br>
 ## 구조
 
 ```
-TransNews
-│
-├─ app
-│   ├─ main.py
-│   │
-│   ├─ routers
-│   │   ├─ article_router.py
-│   │   ├─ summary_router.py
-│   │   └─ search_router.py
-│   │
-│   ├─ services
-│   │   ├─ crawler_service.py
-│   │   ├─ summarizer_service.py
-│   │   ├─ translate_service.py
-│   │   ├─ rss_service.py
-│   │   └─ search_service.py
-│   │
-│   ├─ schemas
-│   │   └─ models.py
-│   │
-│   └─ config.py
-│
-├─ requirements.txt
-├─ README.md
-└─ .gitignore
+transnews-backend/
+├── app/
+│   ├── main.py
+│   └── config.py
+├── services/
+│   ├── crawler_service.py
+│   ├── summarizer_service.py
+│   └── rss_service.py
+├── routers/
+│   ├── news_router.py
+│   ├── summary_router.py
+│   └── pipeline_router.py
+├── .gitignore
+├── .env.example (실제 키 대신 가짜 키를 넣은 예시 파일)
+├── requirements.txt
+└── README.md
 ```
 
 ## 설치
